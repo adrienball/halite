@@ -2,15 +2,9 @@ import hlt
 from hlt import NORTH, EAST, SOUTH, WEST, STILL, Move, Square
 import random
 import math
-import logging
 
 myID, game_map = hlt.get_init()
-# logging.basicConfig(filename='debug.log', filemode='w', level=logging.DEBUG)
 hlt.send_init("ChallengerBot")
-
-
-# strengths = [square.strength for square in game_map]
-# logging.debug(strengths)
 
 
 def assign_move(square):
