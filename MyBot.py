@@ -6,11 +6,11 @@ import logging
 
 myID, game_map = hlt.get_init()
 # logging.basicConfig(filename='debug.log', filemode='w', level=logging.DEBUG)
-hlt.send_init("ChallengerBot")
+hlt.send_init("MyPythonBot")
 
 
-# strengths = [square.strength for square in game_map]
-# logging.debug(strengths)
+# strengths_and_productions = [[square.strength, square.production] for square in game_map]
+# logging.debug(strengths_and_productions)
 
 
 def assign_move(square):
