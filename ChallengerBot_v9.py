@@ -5,21 +5,17 @@ import math
 import os
 
 
-def assign_move(square, available_directions={NORTH, EAST, SOUTH, WEST}):
-    if len(available_directions) == 0 or square.strength <= 5 * square.production:
+def assign_move(square):
+    if square.strength <= 5 * square.production:
         return Move(square, STILL)
 
-    if len(available_directions) > 1:
-        directions_with_opportunity = [
-            {"direction": direction, "opportunity": direction_opportunity(square, direction)}
-            for direction in available_directions
-            ]
-        directions_with_opportunity.sort(key=lambda item: -item["opportunity"])
+    directions_with_opportunity = [
+        {"direction": direction, "opportunity": direction_opportunity(square, direction)}
+        for direction in [NORTH, EAST, SOUTH, WEST]
+        ]
+    directions_with_opportunity.sort(key=lambda item: -item["opportunity"])
 
-        best_opportunity_direction = directions_with_opportunity[0]["direction"]
-    else:
-        best_opportunity_direction = list(available_directions)[0]
-
+    best_opportunity_direction = directions_with_opportunity[0]["direction"]
     target_square = game_map.get_target(square, best_opportunity_direction)
 
     if is_move_possible(square, target_square):
@@ -125,49 +121,5 @@ hlt.send_init(bot_name)
 
 while True:
     game_map.get_frame()
-    targets = {}
-
-    squares_stack = [{'square': square, 'available_directions': {NORTH, EAST, SOUTH, WEST}} for square in game_map if
-                     square.owner == myID]
-
-    while len(squares_stack) > 0:
-        square_with_available_directions = squares_stack.pop()
-        square = square_with_available_directions['square']
-        available_directions = square_with_available_directions['available_directions']
-        move = assign_move(square, available_directions)
-        target = game_map.get_target(square, move.direction)
-        target_key = "{},{}".format(target.x, target.y)
-        if target_key not in targets:
-            targets[target_key] = [{'move': move, 'available_directions': available_directions}]
-        else:
-            existing_moves = targets[target_key]
-            moves = existing_moves + [{'move': move, 'available_directions': available_directions}]
-            if sum([m['move'].square.strength for m in moves]) <= 255 * 1.2:
-                targets[target_key] = existing_moves + [{'move': move, 'available_directions': available_directions}]
-            else:
-                if move.direction == STILL:
-                    targets[target_key] = [{'move': move, 'available_directions': {}}]
-                    for existing_move in existing_moves:
-                        directions = existing_move['available_directions']
-                        directions.remove(existing_move['move'].direction)
-                        squares_stack.append(
-                            {'square': existing_move['move'].square, 'available_directions': directions})
-                else:
-                    # sorting existing moves by decreasing strength
-                    moves.sort(
-                        key=lambda item: -1000 if item['move'].direction == STILL else -item['move'].square.strength)
-                    total_strength = 0
-                    top_moves = []
-                    for mv in moves:
-                        strength = mv['move'].square.strength
-                        if total_strength + strength <= 255:
-                            total_strength += strength
-                            top_moves.append(mv)
-                        else:
-                            directions = mv['available_directions']
-                            directions.remove(mv['move'].direction)
-                            squares_stack.append({'square': mv['move'].square, 'available_directions': directions})
-                    targets[target_key] = top_moves
-
-    moves = [target_move['move'] for target_moves in targets.values() for target_move in target_moves]
+    moves = [assign_move(square) for square in game_map if square.owner == myID]
     hlt.send_frame(moves)
