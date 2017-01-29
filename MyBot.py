@@ -3,26 +3,51 @@ from hlt import NORTH, EAST, SOUTH, WEST, STILL, Move
 from itertools import groupby
 import math
 import os
+import logging
 
 MAX_STRENGTH = 255
+
+logging.basicConfig(filename='debug.log', level=logging.DEBUG)
 
 
 def get_best_individual_move(square, available_directions={NORTH, EAST, SOUTH, WEST}):
     if len(available_directions) == 0 or square.strength <= 5 * square.production:
         return Move(square, STILL)
 
-    if len(available_directions) > 1:
-        best_opportunity_direction = max(available_directions,
-                                         key=lambda direction: direction_opportunity(square, direction))
-    else:
-        best_opportunity_direction = list(available_directions)[0]
+    best_opportunity_square = max(game_map.neighbors(square, n=20),
+                                  key=lambda s: target_opportunity(source_square=square, target_square=s))
 
-    target_square = game_map.get_target(square, best_opportunity_direction)
+    directions = [d for d in get_directions(square, best_opportunity_square) if d in available_directions]
+    for direction in list(directions):
+        if is_direction_possible(square, direction):
+            return Move(square, direction)
+    return Move(square, STILL)
 
-    if is_move_possible(square, target_square):
-        return Move(square, best_opportunity_direction)
+
+def get_directions(source_square, target_square):
+    delta_y = target_square.y - source_square.y
+    delta_x = target_square.x - source_square.x
+    if delta_y == 0:
+        return [EAST] if delta_x > 0 else [WEST]
+    if delta_x == 0:
+        return [SOUTH] if delta_y > 0 else [NORTH]
+
+    if delta_y > 0:
+        # Moving SOUTH
+        if delta_x > 0:
+            # Moving EAST
+            return [SOUTH, EAST] if abs(delta_y) > abs(delta_x) else [EAST, SOUTH]
+        else:
+            # Moving WEST
+            return [SOUTH, WEST] if abs(delta_y) > abs(delta_x) else [WEST, SOUTH]
     else:
-        return Move(square, STILL)
+        # Moving NORTH
+        if delta_x > 0:
+            # Moving EAST
+            return [NORTH, EAST] if abs(delta_y) > abs(delta_x) else [EAST, NORTH]
+        else:
+            # Moving WEST
+            return [NORTH, WEST] if abs(delta_y) > abs(delta_x) else [WEST, NORTH]
 
 
 def is_direction_possible(source_square, direction):
@@ -38,39 +63,13 @@ def is_move_possible(source_square, target_square):
         return source_square.strength >= target_square.strength
 
 
-def direction_opportunity(square, direction):
-    return still_opportunity(square) if direction == STILL else move_opportunity(square, direction)
-
-
-def still_opportunity(square):
-    return square_opportunity(square.strength, square.production)
-
-
-def square_opportunity(strength, production):
-    normalized_strength = (strength + 1) / (MAX_STRENGTH + 1)
-    normalized_production = (production + 1) / (MAX_PRODUCTION + 1)
+def target_opportunity(source_square, target_square):
+    normalized_strength = (target_square.strength + 1) / (MAX_STRENGTH + 1)
+    normalized_production = (target_square.production + 1) / (MAX_PRODUCTION + 1)
     opportunity = normalized_production / normalized_strength
-    return opportunity
-
-
-def move_opportunity(square, direction):
-    """
-    :return: a float that represents the opportunity of moving to `direction` from `square`
-    """
-    opportunity = 0
-    current_weight = 1
-    decay_factor = math.exp(-1 / 2.0)
-    total_weight = 0
-    current_square = square
-
-    for i in range(game_map.width):
-        neighbor = game_map.get_target(current_square, direction)
-        opportunity_factor = get_opportunity_factor(neighbor.owner)
-        opportunity += opportunity_factor * square_opportunity(neighbor.strength, neighbor.production) * current_weight
-        current_square = neighbor
-        total_weight += current_weight
-        current_weight *= decay_factor
-    return opportunity / total_weight
+    opportunity_factor = get_opportunity_factor(target_square.owner)
+    distance_factor = get_distance_factor(source_square, target_square)
+    return opportunity * opportunity_factor * distance_factor
 
 
 def get_opportunity_factor(square_owner):
@@ -82,6 +81,12 @@ def get_opportunity_factor(square_owner):
         return 1.2
     else:
         return 0.7
+
+
+def get_distance_factor(source_square, target_square):
+    distance = game_map.get_distance(source_square, target_square)
+    distance_factor = math.exp(-distance / 2.0)
+    return distance_factor
 
 
 def get_number_of_enemy_bots():
@@ -168,4 +173,5 @@ hlt.send_init(bot_name)
 while True:
     game_map.get_frame()
     number_of_enemy_bots = get_number_of_enemy_bots()
-    hlt.send_frame(get_best_collective_moves())
+    best_collective_moves = get_best_collective_moves()
+    hlt.send_frame(best_collective_moves)
