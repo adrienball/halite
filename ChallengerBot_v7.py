@@ -1,13 +1,11 @@
 import hlt
 from hlt import NORTH, EAST, SOUTH, WEST, STILL, Move, Square
-import logging
 import math
 
 myID, game_map = hlt.get_init()
 productions = [square.production for square in game_map]
 max_production = max(productions)
-logging.basicConfig(filename='debug.log', filemode='w', level=logging.DEBUG)
-hlt.send_init("MyBot")
+hlt.send_init("ChallengerBot_v7")
 
 
 def distance_to_enemy(square, direction):
