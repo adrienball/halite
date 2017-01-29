@@ -17,6 +17,7 @@ run_halite() {
         bot_3=${bot_names[2]}
         ./halite -d "$1 $2" -q "python3 ${bot_1}.py" "python3 ${bot_2}.py" "python3 ${bot_3}.py"
     elif [ ${nb_bots} = 4 ]; then
+        bot_3=${bot_names[2]}
         bot_4=${bot_names[3]}
         ./halite -d "$1 $2" -q "python3 ${bot_1}.py" "python3 ${bot_2}.py" "python3 ${bot_3}.py" "python3 ${bot_4}.py"
     fi
