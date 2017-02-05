@@ -10,6 +10,10 @@ CARDINAL_DIRECTIONS = {NORTH, EAST, SOUTH, WEST}
 
 
 def get_best_individual_move(square, available_directions=CARDINAL_DIRECTIONS):
+    """
+    Computes the best move for `square` without consideration for other owned
+    squares
+    """
     if len(available_directions) == 0:
         return Move(square, STILL)
 
@@ -38,8 +42,14 @@ def get_best_individual_move(square, available_directions=CARDINAL_DIRECTIONS):
         return Move(square, STILL)
 
 
-def get_best_path_direction(square, direction):
-    cardinal_directions = get_cardinal_directions(direction)
+def get_best_path_direction(square, diag_direction):
+    """
+    :param square: starting square
+    :param diag_direction: diagonal direction to aim at
+    :return: the best cardinal direction to follow among the two possible
+    choices
+    """
+    cardinal_directions = get_cardinal_directions(diag_direction)
     targets = [game_map.get_target(square, d) for d in cardinal_directions]
     strengths = [-(MAX_STRENGTH - t.strength) if t.owner == myID else t.strength
                  for t in targets]
@@ -50,6 +60,10 @@ def get_best_path_direction(square, direction):
 
 
 def get_diagonal_directions(directions):
+    """
+    :param directions: a list of cardinal directions
+    :return: the list of diagonal directions that are derived from `directions`
+    """
     diag_directions = set()
     if SOUTH in directions:
         if EAST in directions:
@@ -65,6 +79,10 @@ def get_diagonal_directions(directions):
 
 
 def get_cardinal_directions(diagonal_direction):
+    """
+    Returns the list of two cardinal directions that `diagonal_directions`
+    contained
+    """
     if diagonal_direction == SOUTH_WEST:
         return [SOUTH, WEST]
     if diagonal_direction == SOUTH_EAST:
@@ -87,6 +105,10 @@ def get_target(square, direction):
 
 
 def get_target_diagonal(square, direction):
+    """
+    Returns the square located in the diagonal direction `direction` from
+    `square`
+    """
     if direction == SOUTH_WEST:
         target = game_map.get_target(square, SOUTH)
         target = game_map.get_target(target, WEST)
@@ -129,7 +151,7 @@ def square_opportunity(square):
 
 def move_opportunity(square, direction):
     """
-    :return: a float that represents the opportunity of moving to `direction`
+    Returns a float that represents the opportunity of moving to `direction`
     from `square`
     """
     is_diagonal = is_diagonal_direction(direction)
@@ -155,6 +177,9 @@ def move_opportunity(square, direction):
 
 
 def get_opportunity_factor(square_owner):
+    """
+    Returns a multiplying factor that takes into account square ownership
+    """
     if square_owner == myID:
         return 0.0
     elif square_owner == unowned_id:
@@ -166,6 +191,10 @@ def get_opportunity_factor(square_owner):
 
 
 def get_overkill_factor(source_square, target_square):
+    """
+    Returns a multiplying factor taking into account the overkill damage which
+    would result from moving `source_square` to `target_square`
+    """
     neighbors = game_map.neighbors(target_square, n=1, include_self=True)
     enemies = filter(lambda s: s.owner != myID and s.owner != unowned_id,
                      neighbors)
@@ -184,10 +213,9 @@ def get_number_of_enemy_bots():
 
 def get_best_collective_moves():
     """
-    Compute the best collective moves by processing the stack of best individual
+    Computes the best collective moves by processing the stack of best individual
     moves and re-affecting self-destructive moves, i.e. moves that have a
     cumulative strength > MAX_STRENGTH.
-    :return: a list of moves that are collectively optimized
     """
 
     targets = [[None for j in range(game_map.width)] for i in
