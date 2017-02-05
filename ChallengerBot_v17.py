@@ -121,7 +121,7 @@ def still_opportunity(square):
 def square_opportunity(square):
     normalized_strength = (square.strength) / (MAX_STRENGTH)
     normalized_production = (square.production) / (MAX_PRODUCTION)
-    opportunity = normalized_production * ((1 - normalized_strength) ** 3) #/ (1 + normalized_strength)
+    opportunity = normalized_production * ((1 - normalized_strength) ** 3)
     return opportunity
 
 
