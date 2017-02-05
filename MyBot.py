@@ -4,6 +4,7 @@ import math
 import os
 
 MAX_STRENGTH = 255
+UNOWNED_ID = 0
 
 SOUTH_EAST, SOUTH_WEST, NORTH_WEST, NORTH_EAST = range(5, 9)
 CARDINAL_DIRECTIONS = {NORTH, EAST, SOUTH, WEST}
@@ -135,7 +136,7 @@ def is_direction_possible(source_square, direction):
 def is_move_possible(source_square, target_square):
     if target_square.owner == myID:
         return True
-    elif target_square.owner == unowned_id:
+    elif target_square.owner == UNOWNED_ID:
         return source_square.strength > target_square.strength
     else:
         return source_square.strength >= target_square.strength
@@ -161,8 +162,8 @@ def move_opportunity(square, direction):
     if is_diagonal:
         decay_factor **= 2
     current_square = square
-    max_width = min(game_map.width, 45)
-    horizon = max_width / 4 if is_diagonal else max_width / 2
+    max_radius = min(game_map.width / 2, 15)
+    horizon = max_radius / 2 if is_diagonal else max_radius
 
     for i in range(int(horizon)):
         neighbor = get_target(current_square, direction)
@@ -182,7 +183,7 @@ def get_opportunity_factor(square_owner):
     """
     if square_owner == myID:
         return 0.0
-    elif square_owner == unowned_id:
+    elif square_owner == UNOWNED_ID:
         return 1.0
     elif number_of_enemy_bots == 1:
         return 1.2
@@ -196,7 +197,7 @@ def get_overkill_factor(source_square, target_square):
     would result from moving `source_square` to `target_square`
     """
     neighbors = game_map.neighbors(target_square, n=1, include_self=True)
-    enemies = filter(lambda s: s.owner != myID and s.owner != unowned_id,
+    enemies = filter(lambda s: s.owner != myID and s.owner != UNOWNED_ID,
                      neighbors)
     total_damage = 0
     for s in enemies:
@@ -278,7 +279,6 @@ def get_best_collective_moves():
 myID, game_map = hlt.get_init()
 productions = [sq.production for sq in game_map]
 MAX_PRODUCTION = max(productions)
-unowned_id = 0
 bot_name = os.path.basename(__file__).split('.')[0]
 hlt.send_init(bot_name)
 
