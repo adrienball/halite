@@ -1,11 +1,5 @@
 #!/bin/bash
 
-bot_1_wins=0
-bot_2_wins=0
-bot_3_wins=0
-bot_4_wins=0
-
-
 run_halite() {
     read -ra bot_names <<<$3
     nb_bots=${#bot_names[@]}
@@ -33,11 +27,22 @@ is_result_line() {
 process_line() {
     line=$1
     read -ra elements <<<${line}
-    bot_id=${elements[0]}
-    bot_rank=${elements[1]}
     bot_last_alive=${elements[2]}
     echo "${bot_last_alive};"
 }
+
+formatted_result() {
+    bot_name=$1
+    bot_wins=$2
+    iterations=$3
+    ratio=$((bot_wins * 100 / iterations))
+    echo "${bot_name}: ${bot_wins} (${ratio}%)"
+}
+
+bot_1_wins=0
+bot_2_wins=0
+bot_3_wins=0
+bot_4_wins=0
 
 width=$1
 height=$2
@@ -46,17 +51,16 @@ iterations=$3
 read -ra bot_names <<<$4
 nb_bots=${#bot_names[@]}
 
-(( nb_bots < 2 || nb_bots > 4 )) && echo "Invalid number of bots: ${nb_bots}"
+(( nb_bots < 2 || nb_bots > 4 )) && echo "Invalid number of bots: ${nb_bots}" && exit
 
 for iteration in `seq 1 ${iterations}`; do
     printf "iteration ${iteration}: "
     last_alive=$(run_halite ${width} ${height} "$4" |
-        while IFS= read -r line
-        do
+        while IFS= read -r line; do
             is_result_line "$line" && echo $(process_line "$line")
         done |tr -d '\n')
-    last_alive="${last_alive%?}"
 
+    last_alive="${last_alive%?}"
     IFS=';' read -ra last_alive_array <<< "$last_alive"
 
     max_alive=0
@@ -80,12 +84,10 @@ for iteration in `seq 1 ${iterations}`; do
 done
 
 printf "\n===========RESULTS=============\n"
-ratio_1=$((bot_1_wins * 100 / iterations))
-printf "\t${bot_names[0]}: ${bot_1_wins} (${ratio_1}%%)\n"
-ratio_2=$((bot_2_wins * 100 / iterations))
-printf "\t${bot_names[1]}: ${bot_2_wins} (${ratio_2}%%)\n"
-(( nb_bots > 2 )) && ratio_3=$((bot_3_wins * 100 / iterations)) &&
-    printf "\t${bot_names[2]}: ${bot_3_wins} (${ratio_3}%%)\n"
-(( nb_bots > 3 )) && ratio_4=$((bot_4_wins * 100 / iterations)) &&
-    printf "\t${bot_names[3]}: ${bot_4_wins} (${ratio_4}%%)\n"
+echo $(formatted_result ${bot_names[0]} ${bot_1_wins} ${iterations})
+echo $(formatted_result ${bot_names[1]} ${bot_2_wins} ${iterations})
+(( nb_bots > 2 )) &&
+    echo $(formatted_result ${bot_names[2]} ${bot_3_wins} ${iterations})
+(( nb_bots > 3 )) &&
+    echo $(formatted_result ${bot_names[3]} ${bot_4_wins} ${iterations})
 printf "===============================\n"
