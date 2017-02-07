@@ -166,14 +166,12 @@ def get_opportunity_factor(square_owner):
 
 
 def get_overkill_factor(source_square, target_square):
-    neighbors = game_map.neighbors(target_square, n=1, include_self=True)
+    neighbors = game_map.neighbors(target_square)
     enemies = filter(lambda s: s.owner != myID and s.owner != unowned_id,
                      neighbors)
-    total_damage = 0
-    for s in enemies:
-        total_damage += min(source_square.strength, s.strength)
-    min_damage = min(source_square.strength, target_square.strength)
-    overkill_damage = total_damage - min_damage
+    overkill_damage = 0
+    for e in enemies:
+        overkill_damage += min(source_square.strength, e.strength)
     return 1 + overkill_damage / MAX_STRENGTH
 
 
